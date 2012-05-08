@@ -24,11 +24,17 @@ class yfs_client {
     unsigned long atime;
     unsigned long mtime;
     unsigned long ctime;
+    unsigned long mode;
+    unsigned long uid;
+    unsigned long gid;
   };
   struct dirinfo {
     unsigned long atime;
     unsigned long mtime;
     unsigned long ctime;
+    unsigned long mode;
+    unsigned long uid;
+    unsigned long gid;
   };
   struct dirent {
     std::string name;
@@ -48,7 +54,7 @@ class yfs_client {
   int getfile(inum, fileinfo &);
   int getdir(inum, dirinfo &);
   int lookup(inum, std::string, inum &);
-  int create(inum, inum, std::string);
+  int create(inum, inum, std::string, mode_t);
   int unlink(inum, std::string);
   int readdir(inum, std::list<dirent> &);
   int write(inum, off_t, std::string);

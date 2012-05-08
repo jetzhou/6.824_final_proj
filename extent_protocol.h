@@ -14,7 +14,8 @@ class extent_protocol {
     put = 0x6001,
     get,
     getattr,
-    remove
+    remove,
+    setmode
   };
 
   struct attr {
@@ -22,6 +23,9 @@ class extent_protocol {
     unsigned int mtime;
     unsigned int ctime;
     unsigned int size;
+    unsigned int mode;
+    unsigned int uid;
+    unsigned int gid;
   };
 };
 
@@ -32,6 +36,9 @@ operator>>(unmarshall &u, extent_protocol::attr &a)
   u >> a.mtime;
   u >> a.ctime;
   u >> a.size;
+  u >> a.mode;
+  u >> a.uid;
+  u >> a.gid;
   return u;
 }
 
@@ -42,6 +49,9 @@ operator<<(marshall &m, extent_protocol::attr a)
   m << a.mtime;
   m << a.ctime;
   m << a.size;
+  m << a.mode;
+  m << a.uid;
+  m << a.gid;
   return m;
 }
 

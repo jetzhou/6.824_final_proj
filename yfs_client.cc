@@ -146,7 +146,7 @@ yfs_client::lookup(inum pnum, std::string fname, inum &fnum)
 }
 
 int
-yfs_client::create(inum pnum, inum fnum, std::string fname)
+yfs_client::create(inum pnum, inum fnum, std::string fname, mode_t mode)
 {
   ServerScopedLock psl(lc, (lock_protocol::lockid_t) pnum);
   ServerScopedLock fsl(lc, (lock_protocol::lockid_t) fnum);
@@ -165,6 +165,10 @@ yfs_client::create(inum pnum, inum fnum, std::string fname)
  
     // save a new record for the fnum, empty string as its content
     ec->put(fnum, "");
+    extent_protocol::attr a;
+    ec->getattr(fnum, a);
+    a.mode = mode;
+    ec->setmode(fnum, a);
     return OK;
   }
 }

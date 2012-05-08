@@ -63,12 +63,14 @@ getattr(yfs_client::inum inum, struct stat &st)
      ret = yfs->getfile(inum, info);
      if(ret != yfs_client::OK)
        return ret;
-     st.st_mode = S_IFREG | 0666;
+     st.st_mode = S_IFREG | info.mode;
      st.st_nlink = 1;
      st.st_atime = info.atime;
      st.st_mtime = info.mtime;
      st.st_ctime = info.ctime;
      st.st_size = info.size;
+     st.st_uid = info.uid;
+     st.st_gid = info.gid;
      printf("   getattr, file -> %llu\n", info.size);
      printf("   getattr, file -> %lu %lu %lu\n", info.atime, info.mtime, info.ctime);
    } else {
@@ -76,11 +78,13 @@ getattr(yfs_client::inum inum, struct stat &st)
      ret = yfs->getdir(inum, info);
      if(ret != yfs_client::OK)
        return ret;
-     st.st_mode = S_IFDIR | 0777;
+     st.st_mode = S_IFDIR | info.mode;
      st.st_nlink = 2;
      st.st_atime = info.atime;
      st.st_mtime = info.mtime;
      st.st_ctime = info.ctime;
+     st.st_uid = info.uid;
+     st.st_gid = info.gid;
      printf("   getattr, dir -> %lu %lu %lu\n", info.atime, info.mtime, info.ctime);
    }
    return yfs_client::OK;
@@ -315,7 +319,7 @@ fuseserver_createhelper(fuse_ino_t parent, const char *name,
   std::string fname(name);
   
   yfs_client::inum fnum = random_inum(is_file);
-  ret = yfs->create(pnum, fnum, fname);
+  ret = yfs->create(pnum, fnum, fname, mode);
   if (ret != yfs_client::OK) {
     // error or exist
     return ret;

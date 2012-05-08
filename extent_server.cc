@@ -64,6 +64,26 @@ int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::attr
       a.atime = attr.atime;
       a.mtime = attr.mtime;
       a.ctime = attr.ctime;
+      a.mode = attr.mode;
+      a.uid = attr.uid;
+      a.gid = attr.gid;
+      return extent_protocol::OK;
+  }
+}
+
+int extent_server::setmode(extent_protocol::extentid_t id, extent_protocol::attr a, int &)
+{
+  ScopedLock l(&mutex);
+  // set mode/uid/gid correponding to extentid if it exists
+  // return NOENT otherwise
+  if (contents.count(id) == 0) {
+      return extent_protocol::NOENT;
+  } else {
+      extent_protocol::attr attr = attrs[id];
+      attr.mode = a.mode;
+      attr.uid = a.uid;
+      attr.gid = a.gid;
+      attrs[id] = attr;
       return extent_protocol::OK;
   }
 }
