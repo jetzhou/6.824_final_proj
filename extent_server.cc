@@ -130,9 +130,8 @@ bool extent_server::has_execute_perm(extent_protocol::extentid_t id, extent_prot
 //@frango: check if user exists in group
 bool extent_server::in_group(extent_protocol::userid_t userid, std::string groupname)
 {
-	//group id does not exist for group name
-	if(groupids.find(groupname) == groupids.end()){
-		printf("extent_server::in_group() group %s does not exist", groupname.c_str());
+	//group does not exist
+	if(!group_exists(groupname)){
 		return false;
 	}
 	
@@ -153,5 +152,16 @@ bool extent_server::in_group(extent_protocol::userid_t userid,
 		}
 	}
 	return false;
+}
+
+bool extent_server::group_exists(std::string name)
+{
+	//group id does not exist for group name
+	if(groupids.find(name) == groupids.end()){
+		printf("extent_server::in_group() group %s does not exist", name.c_str());
+		return false;
+	}
+	return true;
+	
 }
 
