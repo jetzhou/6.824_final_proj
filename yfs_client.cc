@@ -35,8 +35,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
 yfs_client::yfs_client(std::string extent_dst, std::string lock_dst, std::string userkey)
 {
-	//TODO: getuid() to set userid
-  ec = new extent_client(extent_dst, 0, userkey);
+  ec = new extent_client(extent_dst, (extent_protocol::userid_t) getuid(), userkey);
   lc = new lock_client(lock_dst);
   // put in root directory
   inum root = 0x80000001;
@@ -129,7 +128,10 @@ yfs_client::lookup(inum pnum, std::string fname, inum &fnum)
 
   // get the associated content with this inum
   std::string buf;
-  ec->get(pnum, buf);
+  extent_protocol::status r = ec->get(pnum, buf);
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
 
   // parse the string
   std::vector<std::string> name_n_nums = split(buf, '/');
@@ -154,7 +156,11 @@ yfs_client::create(inum pnum, inum fnum, std::string fname, mode_t mode)
 
   // get the directory string first
   std::string buf;
-  ec->get(pnum, buf);
+  extent_protocol::status r = ec->get(pnum, buf);
+
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
 
   // see if the name already exists
   if (buf.find(fname) != std::string::npos) {
@@ -169,7 +175,7 @@ yfs_client::create(inum pnum, inum fnum, std::string fname, mode_t mode)
     extent_protocol::attr a;
     ec->getattr(fnum, a);
     a.mode = mode;
-    ec->setmode(fnum, a);
+    ec->setattr(fnum, a);
     return OK;
   }
 }
@@ -180,7 +186,10 @@ yfs_client::readdir(inum num, std::list<dirent> &dirents)
   ServerScopedLock sl(lc, (lock_protocol::lockid_t) num);
   // get the directory string
   std::string buf;
-  ec->get(num, buf); 
+  extent_protocol::status r = ec->get(num, buf); 
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
 
   // parse the string
   std::vector<std::string> name_n_nums = split(buf, '/');
@@ -210,7 +219,10 @@ yfs_client::write(inum num, off_t off, std::string buf)
   
   // get the associated content with this inum
   std::string content;
-  ec->get(num, content);
+  extent_protocol::status r = ec->get(num, content);
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
   
   size_t size = content.size();
 
@@ -238,7 +250,10 @@ yfs_client::read(inum num, off_t off, size_t size, std::string &buf)
   
   // get the associated content with this inum
   std::string content;
-  ec->get(num, content);
+  extent_protocol::status r = ec->get(num, content);
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
 
   buf.replace(0, size, content, off, size);
   return OK;
@@ -251,7 +266,10 @@ yfs_client::truncate(inum num, size_t size)
   
   // get the associated content with this inum
   std::string content;
-  ec->get(num, content);
+  extent_protocol::status r = ec->get(num, content);
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
 
   size_t trun_len = content.size() - size;
   content.erase(trun_len);
@@ -266,7 +284,10 @@ yfs_client::unlink(inum pnum, std::string fname) {
   
   // first remove the record from its parent
   std::string buf;
-  ec->get(pnum, buf);
+  extent_protocol::status r = ec->get(pnum, buf);
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
 
   // find the fname
   std::vector<std::string> name_n_nums = split(buf, '/');
@@ -293,12 +314,35 @@ yfs_client::unlink(inum pnum, std::string fname) {
 }
 
 int
-yfs_client::chmod(inum fnum, unsigned long mod) {
-  return 0;
+yfs_client::chmod(inum fnum, unsigned long mode) {
+  ServerScopedLock psl(lc, (lock_protocol::lockid_t) fnum);
+  
+  extent_protocol::attr a;
+  extent_protocol::status r = ec->getattr(fnum, a);
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
+
+  a.mode = mode;
+  ec->setattr(fnum, a);
+
+  return OK;
 }
 
 int
 yfs_client::chown(inum fnum, unsigned long uid, unsigned long gid) {
-  return 0;
+  ServerScopedLock psl(lc, (lock_protocol::lockid_t) fnum);
+  
+  extent_protocol::attr a;
+  extent_protocol::status r = ec->getattr(fnum, a);
+  if (r != extent_protocol::OK) {
+    return IOERR;
+  }
+
+  a.uid = uid;
+  a.gid = gid;
+  ec->setattr(fnum, a);
+
+  return OK;
 }
 

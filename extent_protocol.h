@@ -18,7 +18,7 @@ class extent_protocol {
     get,
     getattr,
     remove,
-    setmode
+    setattr
   };
   
   //stuct that stores group name and id
