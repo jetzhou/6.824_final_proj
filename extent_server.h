@@ -22,6 +22,7 @@ class extent_server {
   bool has_write_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
   bool has_execute_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
   bool in_group(extent_protocol::userid_t, std::string);
+  bool in_group(extent_protocol::userid_t, extent_protocol::groupid_t);
 
  public:
   extent_server();
