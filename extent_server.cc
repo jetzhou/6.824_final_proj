@@ -103,30 +103,45 @@ int extent_server::remove(extent_protocol::extentid_t id, extent_protocol::useri
 }
 
 //check if user has permission to read extent
-bool has_read_perm(extent_protocol::extentid_t, extent_protocol::userid_t)
+bool extent_server::has_read_perm(extent_protocol::extentid_t id, extent_protocol::userid_t userid)
 {
 	//TODO
 	return false;
 }
 
 //check if user has permission to write extent
-bool has_write_perm(extent_protocol::extentid_t, extent_protocol::userid_t)
+bool extent_server::has_write_perm(extent_protocol::extentid_t id, extent_protocol::userid_t userid)
 {
 	//TODO
 	return false;
 }
 
 //check if user has permission to execute extent
-bool has_execute_perm(extent_protocol::extentid_t, extent_protocol::userid_t)
+bool extent_server::has_execute_perm(extent_protocol::extentid_t id, extent_protocol::userid_t userid)
 {
 	//TODO
 	return false;
 }
 
-//check if user exists in group
-bool in_group(extent_protocol::userid_t, extent_protocol::group)
+//@frango: check if user exists in group
+bool extent_server::in_group(extent_protocol::userid_t userid, std::string groupname)
 {
-	//TODO
+	//group id does not exist for group name
+	if(groupids.find(groupname) == groupids.end()){
+		printf("extent_server::in_group() group %s does not exist", groupname.c_str());
+		return false;
+	}
+	
+	//group id exists
+	extent_protocol::groupid_t groupid = groupids[groupname];
+	std::list<extent_protocol::userid_t> users = groupusers[groupid];
+	std::list<extent_protocol::userid_t>::iterator it;
+	
+	for(it = users.begin(); it != users.end(); it++){
+		if(*it == userid){
+			return true;
+		}
+	}
 	return false;
 }
 

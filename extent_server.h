@@ -8,13 +8,20 @@
 #include "extent_protocol.h"
 
 class extent_server {
-
+  // stores keys for userids 
+  std::map<extent_protocol::userid_t, std::string> user_keys;
+  //stores list of userids for each group id
+  std::map<extent_protocol::groupid_t, std::list<extent_protocol::userid_t> > groupusers;
+  //stores groupids for group names
+  std::map<std::string, extent_protocol::groupid_t> groupids;
+  
  private:
   pthread_mutex_t mutex;
+  
   bool has_read_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
   bool has_write_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
   bool has_execute_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
-  bool in_group(extent_protocol::userid_t, extent_protocol::group);
+  bool in_group(extent_protocol::userid_t, std::string);
 
  public:
   extent_server();
@@ -23,11 +30,7 @@ class extent_server {
   std::map<extent_protocol::extentid_t, extent_protocol::attr> attrs;
   // stores the contents of each file
   std::map<extent_protocol::extentid_t, std::string> contents;
-  
-  // stores keys for userids 
-  std::map<extent_protocol::userid_t, std::string> user_keys;
-  //stores list of userids for each group id
-  std::map<extent_protocol::group, std::list<extent_protocol::userid_t> > group_users;
+
   
   int put(extent_protocol::extentid_t id, std::string, extent_protocol::userid_t, std::string, int &);
   int get(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, std::string &);
