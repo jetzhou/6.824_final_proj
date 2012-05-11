@@ -31,6 +31,8 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf,
 
   // saves buf under extentid as its key
   contents[id] = buf;
+  
+  group_num = 0;
   return extent_protocol::OK;
 }
 
@@ -120,6 +122,38 @@ int extent_server::reg(extent_protocol::userid_t userid, std::string userkey, in
   return extent_protocol::OK;
 }
 
+
+//makes a group id for the group name
+int extent_server::add_group(std::string name)
+{
+	ScopedLock l(&mutex);
+	//can't create group if it already exists
+	if(group_exists(name)){
+		return extent_protocol::IOERR;
+	}
+	else{ //generate a groupid for name
+		group_num++;
+		
+		//add new group to groupids map
+		groupids[name] = group_num;
+	}
+	return extent_protocol::OK;
+}
+
+
+
+int extent_server::add_user_to_group(extent_protocol::userid_t userid, std::string)
+{
+	ScopedLock l(&mutex);
+	return extent_protocol::OK;
+}
+
+int extent_server::add_user(extent_protocol::userid_t userid)
+{
+	ScopedLock l(&mutex);
+	//TODO: check i
+	return extent_protocol::OK;
+}
 
 //NOTE: the following permissions predicates all called with lock held
 //check if user has permission to read extent
