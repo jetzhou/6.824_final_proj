@@ -8,6 +8,7 @@
 #include "extent_protocol.h"
 
 class extent_server {
+
   // stores keys for userids 
   std::map<extent_protocol::userid_t, std::string> user_keys;
   //stores list of userids for each group id
@@ -22,6 +23,7 @@ class extent_server {
   bool has_write_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
   bool has_execute_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
   bool in_group(extent_protocol::userid_t, std::string);
+  bool group_exists(std::string);
 
  public:
   extent_server();
@@ -37,6 +39,8 @@ class extent_server {
   int getattr(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, extent_protocol::attr &);
   int setmode(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t, std::string, int &);
   int remove(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, int &);
+  
+  int addgroup(extent_protocol::userid_t, std::string);
 
 };
 
