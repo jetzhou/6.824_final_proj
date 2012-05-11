@@ -14,7 +14,8 @@ extent_server::extent_server()
 }
 
 
-int extent_server::put(extent_protocol::extentid_t id, std::string buf, extent_protocol::userid_t userid, std::string userkey, int &)
+int extent_server::put(extent_protocol::extentid_t id, std::string buf,
+        extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
   // create a new attr entry for this extentid
@@ -33,7 +34,8 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf, extent_p
   return extent_protocol::OK;
 }
 
-int extent_server::get(extent_protocol::extentid_t id, extent_protocol::userid_t userid, std::string userkey, std::string &buf)
+int extent_server::get(extent_protocol::extentid_t id,
+        extent_protocol::userid_t userid, std::string userkey, std::string &buf)
 {
   ScopedLock l(&mutex);
   // get content corresponding to extentid if it exists
@@ -47,7 +49,8 @@ int extent_server::get(extent_protocol::extentid_t id, extent_protocol::userid_t
   }
 }
 
-int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::userid_t userid, std::string userkey, extent_protocol::attr &a)
+int extent_server::getattr(extent_protocol::extentid_t id, 
+        extent_protocol::userid_t userid, std::string userkey, extent_protocol::attr &a)
 {
   ScopedLock l(&mutex);
   // get attribute correponding to extentid if it exists
@@ -71,7 +74,8 @@ int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::user
   }
 }
 
-int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t userid, std::string userkey, int &)
+int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr a,
+        extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
   // set mode/uid/gid correponding to extentid if it exists
@@ -88,7 +92,8 @@ int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr
   }
 }
 
-int extent_server::remove(extent_protocol::extentid_t id, extent_protocol::userid_t userid, std::string userkey, int &)
+int extent_server::remove(extent_protocol::extentid_t id,
+        extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
   // remove extentid entry if it exists
@@ -102,9 +107,24 @@ int extent_server::remove(extent_protocol::extentid_t id, extent_protocol::useri
   }
 }
 
+/*
+ * called by extent_client upon construction to make sure that the userid
+ * userkey association will be made in case it's the first time we are seeing
+ * this user
+ */
+int extent_server::reg(extent_protocol::userid_t userid, std::string userkey, int &)
+{
+  if (user_keys.count(userid) == 0) {
+    user_keys[userid] = userkey;
+  }
+  return extent_protocol::OK;
+}
+
+
 //NOTE: the following permissions predicates all called with lock held
 //check if user has permission to read extent
-bool extent_server::has_read_perm(extent_protocol::extentid_t id, extent_protocol::userid_t userid)
+bool extent_server::has_read_perm(extent_protocol::extentid_t id, 
+        extent_protocol::userid_t userid)
 {
     extent_protocol::attr a = attrs[id];
     return (a.mode&0004) || (a.uid==userid && (a.mode&0400)) ||
@@ -112,7 +132,8 @@ bool extent_server::has_read_perm(extent_protocol::extentid_t id, extent_protoco
 }
 
 //check if user has permission to write extent
-bool extent_server::has_write_perm(extent_protocol::extentid_t id, extent_protocol::userid_t userid)
+bool extent_server::has_write_perm(extent_protocol::extentid_t id,
+        extent_protocol::userid_t userid)
 {
     extent_protocol::attr a = attrs[id];
     return (a.mode&0002) || (a.uid==userid && (a.mode&0200)) ||
@@ -120,7 +141,8 @@ bool extent_server::has_write_perm(extent_protocol::extentid_t id, extent_protoc
 }
 
 //check if user has permission to execute extent
-bool extent_server::has_execute_perm(extent_protocol::extentid_t id, extent_protocol::userid_t userid)
+bool extent_server::has_execute_perm(extent_protocol::extentid_t id,
+        extent_protocol::userid_t userid)
 {
     extent_protocol::attr a = attrs[id];
     return (a.mode&0001) || (a.uid==userid && (a.mode&0100)) ||
@@ -128,7 +150,8 @@ bool extent_server::has_execute_perm(extent_protocol::extentid_t id, extent_prot
 }
 
 //@frango: check if user exists in group
-bool extent_server::in_group(extent_protocol::userid_t userid, std::string groupname)
+bool extent_server::in_group(extent_protocol::userid_t userid, 
+        std::string groupname)
 {
 	//group does not exist
 	if(!group_exists(groupname)){

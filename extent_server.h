@@ -41,6 +41,8 @@ class extent_server {
   int setattr(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t, std::string, int &);
   int remove(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, int &);
   
+  int reg(extent_protocol::userid_t userid, std::string userkey, int &);
+  
   int addgroup(extent_protocol::userid_t, std::string);
 
 };

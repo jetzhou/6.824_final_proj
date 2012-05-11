@@ -20,6 +20,8 @@ extent_client::extent_client(std::string dst, extent_protocol::userid_t uid, std
   if (cl->bind() != 0) {
     printf("extent_client: bind failed\n");
   }
+  int r;
+  cl->call(extent_protocol::reg, userid, userkey, r);
 }
 
 extent_protocol::status
