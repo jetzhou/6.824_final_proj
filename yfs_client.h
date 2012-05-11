@@ -60,6 +60,8 @@ class yfs_client {
   int write(inum, off_t, std::string);
   int read(inum, off_t, size_t, std::string &);
   int truncate(inum, size_t);
+  int chmod(inum, unsigned long);
+  int chown(inum, unsigned long, unsigned long);
 };
 
 #endif 

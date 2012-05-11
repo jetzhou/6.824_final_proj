@@ -174,18 +174,19 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
   yfs_client::status ret;
   yfs_client::inum inum = ino;
 
+  struct stat st;
+  ret = getattr(inum, st);
+
+  // doens't exist
+  if (ret != yfs_client::OK) {
+    fuse_reply_err(req, ENOENT);
+    return;
+  }
+
   printf("fuseserver_setattr 0x%x\n", to_set);
   if (FUSE_SET_ATTR_SIZE & to_set) {
     printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
-    struct stat st;
-    ret = getattr(inum, st);
-
-    // doens't exist
-    if (ret != yfs_client::OK) {
-      fuse_reply_err(req, ENOENT);
-      return;
-    }
-    
+   
     // if new size is larger
     if (attr->st_size > st.st_size) {
       char c = '\0';
@@ -196,16 +197,25 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
       ret = yfs->truncate(inum, st.st_size - attr->st_size);
     }
 
-    // whether the write was successful
-    if (ret != yfs_client::OK) {
-      fuse_reply_err(req, ENOENT);
-      return;
-    }
+  } else if (FUSE_SET_ATTR_MODE & to_set) {
+    printf("   fuseserver_setattr setting mode\n");
+    ret = yfs->chmod(inum, attr->st_mode);
 
-    fuse_reply_attr(req, &st, 0);
+  } else if ((FUSE_SET_ATTR_UID & to_set) || (FUSE_SET_ATTR_GID & to_set)) {
+    printf("   fuseserver_setattr set uid or gid\n");
+    ret = yfs->chown(inum, attr->st_uid, attr->st_gid);
+
   } else {
     fuse_reply_err(req, ENOSYS);
   }
+  
+  // whether the write was successful
+  if (ret != yfs_client::OK) {
+    fuse_reply_err(req, ENOENT);
+    return;
+  }
+
+  fuse_reply_attr(req, &st, 0);
 }
 
 //

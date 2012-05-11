@@ -290,3 +290,14 @@ yfs_client::unlink(inum pnum, std::string fname) {
   ec->remove(fnum);
   return OK;
 }
+
+int
+yfs_client::chmod(inum fnum, unsigned long mod) {
+  return 0;
+}
+
+int
+yfs_client::chown(inum fnum, unsigned long uid, unsigned long gid) {
+  return 0;
+}
+
