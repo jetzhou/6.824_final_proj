@@ -71,7 +71,7 @@ int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::user
   }
 }
 
-int extent_server::setmode(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t userid, std::string userkey, int &)
+int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
   // set mode/uid/gid correponding to extentid if it exists

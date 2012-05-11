@@ -210,7 +210,9 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
   }
   
   // whether the write was successful
-  if (ret != yfs_client::OK) {
+  if (ret == yfs_client::IOERR) {
+    fuse_reply_err(req, EACCES);
+  } else if (ret != yfs_client::OK) {
     fuse_reply_err(req, ENOENT);
     return;
   }
@@ -249,7 +251,9 @@ fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
   std::string buf;
   ret = yfs->read(inum, off, size, buf);
 
-  if (ret != yfs_client::OK) {
+  if (ret == yfs_client::IOERR) {
+    fuse_reply_err(req, EACCES);
+  } else if (ret != yfs_client::OK) {
     fuse_reply_err(req, ENOENT);
     return;
   }
@@ -292,7 +296,9 @@ fuseserver_write(fuse_req_t req, fuse_ino_t ino,
   std::string str(buf, size);
   ret = yfs->write(inum, off, str);
   
-  if (ret != yfs_client::OK) {
+  if (ret == yfs_client::IOERR) {
+    fuse_reply_err(req, EACCES);
+  } else if (ret != yfs_client::OK) {
     fuse_reply_err(req, ENOENT);
     return;
   }
@@ -408,6 +414,8 @@ fuseserver_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
   // result
   if (ret == yfs_client::OK) {
     fuse_reply_entry(req, &e);
+  } else if (ret == yfs_client::IOERR) {
+    fuse_reply_err(req, EACCES);
   } else {
     fuse_reply_err(req, ENOENT);
   }
@@ -540,6 +548,8 @@ fuseserver_unlink(fuse_req_t req, fuse_ino_t parent, const char *name)
     fuse_reply_err(req, 0);
   } else if (ret == yfs_client::NOENT) {
     fuse_reply_err(req, ENOENT);
+  } else if (ret == yfs_client::IOERR) {
+    fuse_reply_err(req, EACCES);
   } else {
     fuse_reply_err(req, ENOSYS);
   }
@@ -572,7 +582,7 @@ main(int argc, char *argv[])
   setvbuf(stdout, NULL, _IONBF, 0);
 
   if(argc != 5){
-    fprintf(stderr, "Usage: yfs_client <mountpoint> <port-extent-server> <port-lock-server> <client-key>\n");
+    fprintf(stderr, "Usage: yfs_client <mountpoint> <port-extent-server> <port-lock-server> <userkey>\n");
     exit(1);
   }
   mountpoint = argv[1];
