@@ -33,9 +33,10 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 
 
-yfs_client::yfs_client(std::string extent_dst, std::string lock_dst, std::string client_key)
+yfs_client::yfs_client(std::string extent_dst, std::string lock_dst, std::string userkey)
 {
-  ec = new extent_client(extent_dst);
+	//TODO: getuid() to set userid
+  ec = new extent_client(extent_dst, 0, userkey);
   lc = new lock_client(lock_dst);
   // put in root directory
   inum root = 0x80000001;

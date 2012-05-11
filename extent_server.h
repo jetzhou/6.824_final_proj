@@ -20,11 +20,16 @@ class extent_server {
   // stores the contents of each file
   std::map<extent_protocol::extentid_t, std::string> contents;
   
-  int put(extent_protocol::extentid_t id, std::string, int &);
-  int get(extent_protocol::extentid_t id, std::string &);
-  int getattr(extent_protocol::extentid_t id, extent_protocol::attr &);
-  int setmode(extent_protocol::extentid_t id, extent_protocol::attr a, int &);
-  int remove(extent_protocol::extentid_t id, int &);
+  // stores keys for userids 
+  std::map<extent_protocol::userid_t, std::string> user_keys;
+  //stores list of userids for each group id
+  std::map<extent_protocol::group, std::list<extent_protocol::userid_t> > group_users;
+  
+  int put(extent_protocol::extentid_t id, std::string, extent_protocol::userid_t, std::string, int &);
+  int get(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, std::string &);
+  int getattr(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, extent_protocol::attr &);
+  int setmode(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t, std::string, int &);
+  int remove(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, int &);
 };
 
 #endif 

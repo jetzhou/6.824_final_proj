@@ -8,7 +8,10 @@
 class extent_protocol {
  public:
   typedef int status;
-  typedef unsigned long long extentid_t;
+  typedef unsigned long long extentid_t; //extentid
+  typedef unsigned short userid_t; //userid
+  typedef unsigned short groupid_t; //groupid
+  
   enum xxstatus { OK, RPCERR, NOENT, IOERR };
   enum rpc_numbers {
     put = 0x6001,
@@ -16,6 +19,12 @@ class extent_protocol {
     getattr,
     remove,
     setmode
+  };
+  
+  //stuct that stores group name and id
+  struct group{
+  	std::string name;
+  	groupid_t id;
   };
 
   struct attr {

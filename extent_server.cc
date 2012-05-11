@@ -14,7 +14,7 @@ extent_server::extent_server()
 }
 
 
-int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
+int extent_server::put(extent_protocol::extentid_t id, std::string buf, extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
   // create a new attr entry for this extentid
@@ -33,7 +33,7 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
   return extent_protocol::OK;
 }
 
-int extent_server::get(extent_protocol::extentid_t id, std::string &buf)
+int extent_server::get(extent_protocol::extentid_t id, extent_protocol::userid_t userid, std::string userkey, std::string &buf)
 {
   ScopedLock l(&mutex);
   // get content corresponding to extentid if it exists
@@ -47,7 +47,7 @@ int extent_server::get(extent_protocol::extentid_t id, std::string &buf)
   }
 }
 
-int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::attr &a)
+int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::userid_t userid, std::string userkey, extent_protocol::attr &a)
 {
   ScopedLock l(&mutex);
   // get attribute correponding to extentid if it exists
@@ -71,7 +71,7 @@ int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::attr
   }
 }
 
-int extent_server::setmode(extent_protocol::extentid_t id, extent_protocol::attr a, int &)
+int extent_server::setmode(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
   // set mode/uid/gid correponding to extentid if it exists
@@ -88,7 +88,7 @@ int extent_server::setmode(extent_protocol::extentid_t id, extent_protocol::attr
   }
 }
 
-int extent_server::remove(extent_protocol::extentid_t id, int &)
+int extent_server::remove(extent_protocol::extentid_t id, extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
   // remove extentid entry if it exists
