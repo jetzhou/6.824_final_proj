@@ -11,6 +11,10 @@ class extent_server {
 
  private:
   pthread_mutex_t mutex;
+  bool has_read_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
+  bool has_write_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
+  bool has_execute_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
+  bool in_group(extent_protocol::userid_t, extent_protocol::group);
 
  public:
   extent_server();
@@ -30,6 +34,7 @@ class extent_server {
   int getattr(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, extent_protocol::attr &);
   int setmode(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t, std::string, int &);
   int remove(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, int &);
+
 };
 
 #endif 

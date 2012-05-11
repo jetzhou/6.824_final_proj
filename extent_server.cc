@@ -102,3 +102,31 @@ int extent_server::remove(extent_protocol::extentid_t id, extent_protocol::useri
   }
 }
 
+//check if user has permission to read extent
+bool has_read_perm(extent_protocol::extentid_t, extent_protocol::userid_t)
+{
+	//TODO
+	return false;
+}
+
+//check if user has permission to write extent
+bool has_write_perm(extent_protocol::extentid_t, extent_protocol::userid_t)
+{
+	//TODO
+	return false;
+}
+
+//check if user has permission to execute extent
+bool has_execute_perm(extent_protocol::extentid_t, extent_protocol::userid_t)
+{
+	//TODO
+	return false;
+}
+
+//check if user exists in group
+bool in_group(extent_protocol::userid_t, extent_protocol::group)
+{
+	//TODO
+	return false;
+}
+
