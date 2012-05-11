@@ -175,6 +175,8 @@ yfs_client::create(inum pnum, inum fnum, std::string fname, mode_t mode)
     extent_protocol::attr a;
     ec->getattr(fnum, a);
     a.mode = mode;
+    a.uid = getuid();
+    a.gid = getgid();
     ec->setattr(fnum, a);
     return OK;
   }
