@@ -8,7 +8,10 @@
 #include "extent_protocol.h"
 
 class extent_server {
-
+  // stores the attributes of each file
+  std::map<extent_protocol::extentid_t, extent_protocol::attr> attrs;
+  // stores the contents of each file
+  std::map<extent_protocol::extentid_t, std::string> contents;
   // stores keys for userids 
   std::map<extent_protocol::userid_t, std::string> user_keys;
   //stores list of userids for each group id
@@ -16,8 +19,10 @@ class extent_server {
   //stores groupids for group names
   std::map<std::string, extent_protocol::groupid_t> groupids;
   
+  
  private:
   pthread_mutex_t mutex;
+  extent_protocol::groupid_t group_num; //keeps track of number of groups
   
   bool has_read_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
   bool has_write_perm(extent_protocol::extentid_t, extent_protocol::userid_t);
@@ -28,19 +33,14 @@ class extent_server {
  public:
   extent_server();
 
-  // stores the attributes of each file
-  std::map<extent_protocol::extentid_t, extent_protocol::attr> attrs;
-  // stores the contents of each file
-  std::map<extent_protocol::extentid_t, std::string> contents;
-
-  
   int put(extent_protocol::extentid_t id, std::string, extent_protocol::userid_t, std::string, int &);
   int get(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, std::string &);
   int getattr(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, extent_protocol::attr &);
   int setmode(extent_protocol::extentid_t id, extent_protocol::attr a, extent_protocol::userid_t, std::string, int &);
   int remove(extent_protocol::extentid_t id, extent_protocol::userid_t, std::string, int &);
-  
-  int addgroup(extent_protocol::userid_t, std::string);
+  int add_group(std::string);
+  int add_user(extent_protocol::userid_t);
+  int add_user_to_group(extent_protocol::userid_t, std::string);
 
 };
 
