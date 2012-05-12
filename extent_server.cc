@@ -21,11 +21,14 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf,
   // create a new attr entry for this extentid
   extent_protocol::attr a;
   time_t cur = time(NULL);
-  a.ctime = cur;
-  a.mtime = cur;
   if (attrs.find(id) == attrs.end()) {
       a.atime = cur;
   }
+  else {
+      a = (*(attrs.find(id))).second;
+  }
+  a.ctime = cur;
+  a.mtime = cur;
   a.size = buf.size();
   attrs[id] = a;
 

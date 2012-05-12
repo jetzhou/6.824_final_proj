@@ -59,14 +59,14 @@ echo "starting ./yfs_client $YFSDIR1 $EXTENT_PORT $LOCK_PORT with key $CLIENT_KE
 ./yfs_client $YFSDIR1 $EXTENT_PORT $LOCK_PORT $CLIENT_KEY1> yfs_client1.log 2>&1 &
 sleep 1
 
-rm -rf $YFSDIR2
-mkdir $YFSDIR2 || exit 1
-sleep 1
-CLIENT_KEY2=$(date | md5sum | head -c5)
-echo "starting ./yfs_client $YFSDIR2 $EXTENT_PORT $LOCK_PORT with key $CLIENT_KEY2 > yfs_client2.log 2>&1 &"
-./yfs_client $YFSDIR2 $EXTENT_PORT $LOCK_PORT $CLIENT_KEY2> yfs_client2.log 2>&1 &
+#rm -rf $YFSDIR2
+#mkdir $YFSDIR2 || exit 1
+#sleep 1
+#CLIENT_KEY2=$(date | md5sum | head -c5)
+#echo "starting ./yfs_client $YFSDIR2 $EXTENT_PORT $LOCK_PORT with key $CLIENT_KEY2 > yfs_client2.log 2>&1 &"
+#./yfs_client $YFSDIR2 $EXTENT_PORT $LOCK_PORT $CLIENT_KEY2> yfs_client2.log 2>&1 &
 
-sleep 2
+#sleep 1
 
 # make sure FUSE is mounted where we expect
 pwd=`pwd -P`
@@ -77,8 +77,8 @@ if [ `mount | grep "$pwd/yfs1" | grep -v grep | wc -l` -ne 1 ]; then
 fi
 
 # make sure FUSE is mounted where we expect
-if [ `mount | grep "$pwd/yfs2" | grep -v grep | wc -l` -ne 1 ]; then
-    sh stop.sh
-    echo "Failed to mount YFS properly at ./yfs2"
-    exit -1
-fi
+#if [ `mount | grep "$pwd/yfs2" | grep -v grep | wc -l` -ne 1 ]; then
+#    sh stop.sh
+#    echo "Failed to mount YFS properly at ./yfs2"
+#    exit -1
+#fi

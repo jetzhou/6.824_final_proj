@@ -338,12 +338,14 @@ fuseserver_createhelper(fuse_ino_t parent, const char *name,
   ret = yfs->create(pnum, fnum, fname, mode);
   if (ret != yfs_client::OK) {
     // error or exist
+      printf("create failed 1\n");
     return ret;
   } else { 
     // get attr
     struct stat st;
     ret = getattr(fnum, st);
     if (ret != yfs_client::OK) {
+      printf("create failed 2\n");
       return ret;
     }
     e->ino = fnum;

@@ -93,7 +93,8 @@ yfs_client::getfile(inum inum, fileinfo &fin)
   ServerScopedLock sl(lc, (lock_protocol::lockid_t) inum);
 
   if (ec->getattr(inum, a) != extent_protocol::OK) {
-    return IOERR;
+      //return IOERR;
+      return NOENT;
   }
 
   fin.atime = a.atime;
@@ -119,7 +120,8 @@ yfs_client::getdir(inum inum, dirinfo &din)
 
   if (ec->getattr(inum, a) != extent_protocol::OK) {
       printf("getdir %016llx failed\n", inum);
-    return IOERR;
+      //return IOERR;
+      return NOENT;
   }
   din.atime = a.atime;
   din.mtime = a.mtime;
@@ -140,7 +142,7 @@ yfs_client::lookup(inum pnum, std::string fname, inum &fnum)
   std::string buf;
   extent_protocol::status r = ec->get(pnum, buf);
   if (r != extent_protocol::OK) {
-    return IOERR;
+      return IOERR;
   }
 
   // parse the string
