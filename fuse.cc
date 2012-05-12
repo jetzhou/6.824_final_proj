@@ -212,6 +212,7 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
   // whether the write was successful
   if (ret == yfs_client::IOERR) {
     fuse_reply_err(req, EACCES);
+    return;
   } else if (ret != yfs_client::OK) {
     fuse_reply_err(req, ENOENT);
     return;
@@ -253,6 +254,7 @@ fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 
   if (ret == yfs_client::IOERR) {
     fuse_reply_err(req, EACCES);
+    return;
   } else if (ret != yfs_client::OK) {
     fuse_reply_err(req, ENOENT);
     return;
@@ -298,6 +300,7 @@ fuseserver_write(fuse_req_t req, fuse_ino_t ino,
   
   if (ret == yfs_client::IOERR) {
     fuse_reply_err(req, EACCES);
+    return;
   } else if (ret != yfs_client::OK) {
     fuse_reply_err(req, ENOENT);
     return;

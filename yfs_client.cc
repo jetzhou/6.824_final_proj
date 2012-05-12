@@ -37,6 +37,7 @@ yfs_client::yfs_client(std::string extent_dst, std::string lock_dst, std::string
 {
   ec = new extent_client(extent_dst, (extent_protocol::userid_t) getuid(), userkey);
   lc = new lock_client(lock_dst);
+  
   // put in root directory
   inum root = 0x00000001;
   ServerScopedLock sl(lc, (lock_protocol::lockid_t) root);
@@ -92,15 +93,17 @@ yfs_client::getfile(inum inum, fileinfo &fin)
   
   ServerScopedLock sl(lc, (lock_protocol::lockid_t) inum);
 
-  if (ec->getattr(inum, a) != extent_protocol::OK) {
-      //return IOERR;
-      return NOENT;
+  if (ec->getattr(inum, a) == extent_protocol::NOENT) {
+    return NOENT;
   }
 
   fin.atime = a.atime;
   fin.mtime = a.mtime;
   fin.ctime = a.ctime;
   fin.size = a.size;
+  fin.mode = a.mode;
+  fin.uid = a.uid;
+  fin.gid = a.gid;
   printf("getfile %016llx -> sz %llu\n", inum, fin.size);
 
   return r;
@@ -118,10 +121,8 @@ yfs_client::getdir(inum inum, dirinfo &din)
   
   ServerScopedLock sl(lc, (lock_protocol::lockid_t) inum);
 
-  if (ec->getattr(inum, a) != extent_protocol::OK) {
-      printf("getdir %016llx failed\n", inum);
-      //return IOERR;
-      return NOENT;
+  if (ec->getattr(inum, a) == extent_protocol::NOENT) {
+    return NOENT;
   }
   din.atime = a.atime;
   din.mtime = a.mtime;
@@ -141,8 +142,9 @@ yfs_client::lookup(inum pnum, std::string fname, inum &fnum)
   // get the associated content with this inum
   std::string buf;
   extent_protocol::status r = ec->get(pnum, buf);
-  if (r != extent_protocol::OK) {
-      return IOERR;
+  
+  if (r == extent_protocol::NOENT) {
+    return IOERR;
   }
 
   // parse the string
@@ -170,7 +172,7 @@ yfs_client::create(inum pnum, inum fnum, std::string fname, mode_t mode)
   std::string buf;
   extent_protocol::status r = ec->get(pnum, buf);
 
-  if (r != extent_protocol::OK) {
+  if (r == extent_protocol::NOENT) {
     return IOERR;
   }
 
@@ -201,7 +203,7 @@ yfs_client::readdir(inum num, std::list<dirent> &dirents)
   // get the directory string
   std::string buf;
   extent_protocol::status r = ec->get(num, buf); 
-  if (r != extent_protocol::OK) {
+  if (r == extent_protocol::NOENT) {
     return IOERR;
   }
 
@@ -234,8 +236,8 @@ yfs_client::write(inum num, off_t off, std::string buf)
   // get the associated content with this inum
   std::string content;
   extent_protocol::status r = ec->get(num, content);
-  if (r != extent_protocol::OK) {
-    return IOERR;
+  if (r == extent_protocol::NOENT) {
+    return NOENT;
   }
   
   size_t size = content.size();
@@ -265,8 +267,8 @@ yfs_client::read(inum num, off_t off, size_t size, std::string &buf)
   // get the associated content with this inum
   std::string content;
   extent_protocol::status r = ec->get(num, content);
-  if (r != extent_protocol::OK) {
-    return IOERR;
+  if (r == extent_protocol::NOENT) {
+    return NOENT;
   }
 
   buf.replace(0, size, content, off, size);
@@ -281,8 +283,8 @@ yfs_client::truncate(inum num, size_t size)
   // get the associated content with this inum
   std::string content;
   extent_protocol::status r = ec->get(num, content);
-  if (r != extent_protocol::OK) {
-    return IOERR;
+  if (r == extent_protocol::NOENT) {
+    return NOENT;
   }
 
   size_t trun_len = content.size() - size;
@@ -299,8 +301,8 @@ yfs_client::unlink(inum pnum, std::string fname) {
   // first remove the record from its parent
   std::string buf;
   extent_protocol::status r = ec->get(pnum, buf);
-  if (r != extent_protocol::OK) {
-    return IOERR;
+  if (r == extent_protocol::NOENT) {
+    return NOENT;
   }
 
   // find the fname
@@ -333,8 +335,8 @@ yfs_client::chmod(inum fnum, unsigned long mode) {
   
   extent_protocol::attr a;
   extent_protocol::status r = ec->getattr(fnum, a);
-  if (r != extent_protocol::OK) {
-    return IOERR;
+  if (r == extent_protocol::NOENT) {
+    return NOENT;
   }
 
   a.mode = mode;
@@ -349,8 +351,8 @@ yfs_client::chown(inum fnum, unsigned long uid, unsigned long gid) {
   
   extent_protocol::attr a;
   extent_protocol::status r = ec->getattr(fnum, a);
-  if (r != extent_protocol::OK) {
-    return IOERR;
+  if (r == extent_protocol::NOENT) {
+    return NOENT;
   }
 
   a.uid = uid;
