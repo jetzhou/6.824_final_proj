@@ -1,0 +1,81 @@
+\documentclass[12pt]{article}
+\usepackage{fullpage}
+%\usepackage{singlespace}
+
+\title{Adding Permissions and Authentication to YFS \\ MIT 6.824 Project Report}
+\author{Jeff Bezanson, Frances Zhang, Jet Zhou}
+
+\begin{document}
+\maketitle
+
+\setcounter{secnumdepth}{1}
+
+\subsubsection{Introduction}
+
+The traditional Unix security model provides identification via user
+and group names and IDs, and authentication via password login.
+Access control is provided per-file, where each file
+has a user, group, and permissions bits (corresponding to read, write,
+and execute priviledges). This model was designed for use on mainframes,
+where multiple users log in to a single machine, running a single
+filesystem on a single kernel. Therefore the isolation between kernel
+space and user space is sufficient to enforce security, since making
+system calls is the only way to access filesystem data.
+
+Networked, distributed filesystems change this situation dramatically.
+Any client may attempt to connect to a network service, and we do not
+have the benefit of the {\tt login} program to ensure that users are
+who they say they are. Therefore, although we wish to interoperate with
+existing Unix user domains, we must add an extra layer of authentication
+to make sure attackers cannot break security simply by going around the
+filesystem interface (i.e. connecting directly to the storage server
+with forged credentials).
+
+\subsubsection{Authentication and Signin}
+
+One challenge of implementing a secure filesystem within the FUSE
+architecture is that the interface was originally designed to be
+part of a complete kernel environment, and not used in isolation from
+its security context. For example, the {\tt read}
+and {\tt write} calls do not tell us who is attempting the operation.
+To solve this problem, we need users to sign in to the filesystem.
+In our implementation this is done at mount time; each user must
+create and use their own mount point accessing the shared filesystem.
+Setting restrictive ({\tt 0700}) permissions on this directory keeps
+the mount points private.
+
+Users may supply a ``semi-secret'' key in the file {\tt \~{}/.yfs}, or
+the system will generate one automatically on first use. This key may
+be the public part of a cryptographic key pair, and is used to identify
+a user to YFS. YFS internally associates these keys with Unix user IDs,
+so a user can connect to the filesystem on any machine where they have
+both the same user ID and their YFS key file available. YFS will
+only accept extent server operations tagged with an ID and key that has
+been seen before, and matches the stored permissions for the file in
+question.
+
+The key is ``semi-secret'' because if encryption is not used, then
+security depends on this key staying secret. However, it is possible
+for an attacker to intercept the key. To protect against this, the
+key could be an RSA public key used to encrypt filesystem data. Then
+attackers may be able to obtain the encrypted data, but only the user
+who holds the corresponding private key will be able to decipher it.
+
+\subsubsection{Groups}
+
+Groups represent a further challenge, since group operations like
+{\tt groupmod} and {\tt groupadd} only affect the Unix user database,
+and our filesystem is not able to see them. To deal with this, our
+extent server keeps its own copy of group information, which may become
+out of sync with the user database. Initially, groups are empty except
+that each user belongs to their own associated group. This way, with
+no further information, our server behaves conservatively and rejects
+operations that would only be allowed by group membership. We provide
+a separate tool {\tt yfs\_usermod} for adding users to groups in YFS,
+which is only supported for users YFS already knows about. It would be
+possible for an administrator to run a script to pre-populate YFS
+with user keys and all group memberships. In our experience, groups
+and membership change quite infrequently, so this extra manual step
+may be acceptable.
+
+\end{document}
