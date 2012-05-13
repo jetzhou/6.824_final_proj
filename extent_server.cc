@@ -20,7 +20,7 @@ extent_server::extent_server()
   a.ctime = cur;
   a.mtime = cur;
   a.size = 0;
-  a.mode = 0700;
+  a.mode = 0777;
   a.uid = getuid();
   a.gid = getgid();
   attrs[root] = a;
@@ -31,20 +31,31 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf,
     extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
+
+
   // create a new attr entry for this extentid
   // if it doesnt exist
   time_t cur = time(NULL);
   extent_protocol::attr a;
   if (attrs.count(id) == 0) {
     a.atime = cur;
+    // for a new record, we also have to initialize its permissions, otherwise
+    // the next setattr call will not work. The setattr call is assumed to
+    // modify this to the right value immediately
+    a.mode = 0777;
   } else {
     a = attrs[id];
   }
   a.ctime = cur;
   a.mtime = cur;
   a.size = buf.size();
-  attrs[id] = a;
+  
+  // check permission
+  if (!has_write_perm(id, userid)) {
+    return extent_protocol::NOACCESS;
+  }
 
+  attrs[id] = a;
   // saves buf under extentid as its key
   contents[id] = buf;
 
@@ -57,7 +68,6 @@ int extent_server::get(extent_protocol::extentid_t id,
   ScopedLock l(&mutex);
 
   if (!has_read_perm(id, userid)) {
-    printf("extent server thinks no access!\n");
     return extent_protocol::NOACCESS;
   }
   
@@ -104,6 +114,11 @@ int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr
     extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
+
+  if (!has_write_perm(id, userid)) {
+    return extent_protocol::NOACCESS;
+  }
+
   // set mode/uid/gid correponding to extentid if it exists
   // return NOENT otherwise
   if (contents.count(id) == 0) {
@@ -122,6 +137,11 @@ int extent_server::remove(extent_protocol::extentid_t id,
     extent_protocol::userid_t userid, std::string userkey, int &)
 {
   ScopedLock l(&mutex);
+  
+  if (!has_write_perm(id, userid)) {
+    return extent_protocol::NOACCESS;
+  }
+
   // remove extentid entry if it exists
   // return NOENT otherwise
   if (contents.count(id) == 0) {
@@ -184,8 +204,11 @@ int extent_server::add_user(extent_protocol::userid_t userid)
 bool extent_server::has_read_perm(extent_protocol::extentid_t id, 
     extent_protocol::userid_t userid)
 {
+  // if we have no record of it yet, just return true
+  if (attrs.count(id) == 0) {
+    return true;
+  }
   extent_protocol::attr a = attrs[id];
-  printf("a.mode = %d, a.uid = %d, userid = %d\n", a.mode, a.uid, userid);
   return (a.mode&0004) || (a.uid == userid && (a.mode&0400)) ||
     (in_group(userid, a.gid) && (a.mode&0040));
 }
@@ -194,6 +217,10 @@ bool extent_server::has_read_perm(extent_protocol::extentid_t id,
 bool extent_server::has_write_perm(extent_protocol::extentid_t id,
     extent_protocol::userid_t userid)
 {
+  // if we have no record of it yet, just return true
+  if (attrs.count(id) == 0) {
+    return true;
+  }
   extent_protocol::attr a = attrs[id];
   return (a.mode&0002) || (a.uid==userid && (a.mode&0200)) ||
     (in_group(userid, a.gid) && (a.mode&0020));
@@ -203,6 +230,10 @@ bool extent_server::has_write_perm(extent_protocol::extentid_t id,
 bool extent_server::has_execute_perm(extent_protocol::extentid_t id,
     extent_protocol::userid_t userid)
 {
+  // if we have no record of it yet, just return true
+  if (attrs.count(id) == 0) {
+    return true;
+  }
   extent_protocol::attr a = attrs[id];
   return (a.mode&0001) || (a.uid==userid && (a.mode&0100)) ||
     (in_group(userid, a.gid) && (a.mode&0010));
