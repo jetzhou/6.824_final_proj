@@ -6,6 +6,7 @@
  * high-level interface only gives us complete paths.
  */
 
+#include <fuse.h>
 #include <fuse_lowlevel.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -219,6 +220,43 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
   }
 
   fuse_reply_attr(req, &st, 0);
+}
+
+void
+fuseserver_access(fuse_req_t req, fuse_ino_t ino, int mask)
+{
+    struct fuse_context *fc = fuse_get_context();
+    struct stat st;
+    int ret = getattr(ino, st);
+
+    // doens't exist
+    if (ret != yfs_client::OK) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+    
+    if (mask & F_OK) {
+        fuse_reply_err(req, 0);
+        return;
+    }
+    int mo = st.st_mode;
+    int ui = st.st_uid;
+    int gi = st.st_gid;
+    int r_ok = (!(mask&R_OK) ||
+                ((mo&0004) || (ui==fc->uid && (mo&0400)) ||
+                 (gi==fc->gid && (mo&0040))));
+    int w_ok = (!(mask&W_OK) ||
+                ((mo&0002) || (ui==fc->uid && (mo&0200)) ||
+                 (gi==fc->gid && (mo&0020))));
+    int x_ok = (!(mask&X_OK) ||
+                ((mo&0001) || (ui==fc->uid && (mo&0100)) ||
+                 (gi==fc->gid && (mo&0010))));
+    if (r_ok && w_ok && x_ok) {
+        fuse_reply_err(req, 0);
+    }
+    else {
+        fuse_reply_err(req, EACCES);
+    }
 }
 
 //
@@ -610,6 +648,7 @@ main(int argc, char *argv[])
   fuseserver_oper.setattr    = fuseserver_setattr;
   fuseserver_oper.unlink     = fuseserver_unlink;
   fuseserver_oper.mkdir      = fuseserver_mkdir;
+  fuseserver_oper.access     = fuseserver_access;
 
   const char *fuse_argv[20];
   int fuse_argc = 0;
