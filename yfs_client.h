@@ -16,7 +16,7 @@ class yfs_client {
  public:
 
   typedef unsigned long long inum;
-  enum xxstatus { OK, RPCERR, NOENT, IOERR, EXIST };
+  enum xxstatus { OK, RPCERR, NOENT, IOERR, EXIST, NOACCESS };
   typedef int status;
 
   struct fileinfo {

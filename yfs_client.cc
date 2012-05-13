@@ -136,6 +136,10 @@ yfs_client::lookup(inum pnum, std::string fname, inum &fnum)
     return IOERR;
   }
 
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
+
   // parse the string
   std::vector<std::string> name_n_nums = split(buf, '/');
 
@@ -164,6 +168,10 @@ yfs_client::create(inum pnum, inum fnum, std::string fname, mode_t mode)
   if (r == extent_protocol::NOENT) {
     return IOERR;
   }
+  
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
 
   // see if the name already exists
   if (buf.find(fname) != std::string::npos) {
@@ -171,16 +179,23 @@ yfs_client::create(inum pnum, inum fnum, std::string fname, mode_t mode)
   } else {
     // add this new pair of fnum and fname to the end, save it
     buf += fname + "/" + filename(fnum) + "/";
-    ec->put(pnum, buf);
+    
+    if (ec->put(pnum, buf) == extent_protocol::NOACCESS) {
+      return NOACCESS;
+    }
  
     // save a new record for the fnum, empty string as its content
-    ec->put(fnum, "");
+    if (ec->put(fnum, "") == extent_protocol::NOACCESS) {
+      return NOACCESS;
+    }
     extent_protocol::attr a;
     ec->getattr(fnum, a);
     a.mode = mode;
     a.uid = getuid();
     a.gid = getgid();
-    ec->setattr(fnum, a);
+    if (ec->setattr(fnum, a) == extent_protocol::NOACCESS) {
+      return NOACCESS;
+    }
     return OK;
   }
 }
@@ -194,6 +209,10 @@ yfs_client::readdir(inum num, std::list<dirent> &dirents)
   extent_protocol::status r = ec->get(num, buf); 
   if (r == extent_protocol::NOENT) {
     return IOERR;
+  }
+
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
   }
 
   // parse the string
@@ -229,6 +248,10 @@ yfs_client::write(inum num, off_t off, std::string buf)
     return NOENT;
   }
   
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
+
   size_t size = content.size();
 
   // whether offset is within existing content
@@ -243,7 +266,9 @@ yfs_client::write(inum num, off_t off, std::string buf)
   }
 
   // save the content
-  ec->put(num, content);
+  if (ec->put(num, content) == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
 
   return OK;
 }
@@ -258,6 +283,9 @@ yfs_client::read(inum num, off_t off, size_t size, std::string &buf)
   extent_protocol::status r = ec->get(num, content);
   if (r == extent_protocol::NOENT) {
     return NOENT;
+  }
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
   }
 
   buf.replace(0, size, content, off, size);
@@ -276,10 +304,16 @@ yfs_client::truncate(inum num, size_t size)
     return NOENT;
   }
 
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
+
   size_t trun_len = content.size() - size;
   content.erase(trun_len);
 
-  ec->put(num, content);
+  if (ec->put(num, content) == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
   return OK;
 }
 
@@ -292,6 +326,10 @@ yfs_client::unlink(inum pnum, std::string fname) {
   extent_protocol::status r = ec->get(pnum, buf);
   if (r == extent_protocol::NOENT) {
     return NOENT;
+  }
+  
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
   }
 
   // find the fname
@@ -309,12 +347,16 @@ yfs_client::unlink(inum pnum, std::string fname) {
   size_t npos = fname.size() + 1 + fnum_str.size() + 1; // nameA/1234/nameB/5678/
   buf.erase(buf.find(fname), npos);
   // put it back to the parent record
-  ec->put(pnum, buf);
+  if (ec->put(pnum, buf) == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
     
   // call remove on server to remove the file
   inum fnum = n2i(fnum_str);
   ServerScopedLock fsl(lc, (lock_protocol::lockid_t) fnum);
-  ec->remove(fnum);
+  if (ec->remove(fnum) == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
   return OK;
 }
 
@@ -329,7 +371,9 @@ yfs_client::chmod(inum fnum, unsigned long mode) {
   }
 
   a.mode = mode;
-  ec->setattr(fnum, a);
+  if (ec->setattr(fnum, a) == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
 
   return OK;
 }
@@ -346,7 +390,9 @@ yfs_client::chown(inum fnum, unsigned long uid, unsigned long gid) {
 
   a.uid = uid;
   a.gid = gid;
-  ec->setattr(fnum, a);
+  if (ec->setattr(fnum, a) == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
 
   return OK;
 }
