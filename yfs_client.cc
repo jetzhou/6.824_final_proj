@@ -379,7 +379,7 @@ yfs_client::chmod(inum fnum, unsigned long mode) {
 }
 
 int
-yfs_client::chown(inum fnum, unsigned long uid, unsigned long gid) {
+yfs_client::chown(inum fnum, extent_protocol::userid_t uid, extent_protocol::groupid_t gid) {
   ServerScopedLock psl(lc, (lock_protocol::lockid_t) fnum);
   
   extent_protocol::attr a;

@@ -51,7 +51,7 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf,
   a.size = buf.size();
   
   // check permission
-  if (!has_write_perm(id, userid)) {
+  if (!has_write_perm(id, userid, userkey)) {
     return extent_protocol::NOACCESS;
   }
 
@@ -67,7 +67,7 @@ int extent_server::get(extent_protocol::extentid_t id,
 {
   ScopedLock l(&mutex);
 
-  if (!has_read_perm(id, userid)) {
+  if (!has_read_perm(id, userid, userkey)) {
     return extent_protocol::NOACCESS;
   }
   
@@ -115,7 +115,7 @@ int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr
 {
   ScopedLock l(&mutex);
 
-  if (!has_write_perm(id, userid)) {
+  if (!has_write_perm(id, userid, userkey)) {
     return extent_protocol::NOACCESS;
   }
 
@@ -138,7 +138,7 @@ int extent_server::remove(extent_protocol::extentid_t id,
 {
   ScopedLock l(&mutex);
   
-  if (!has_write_perm(id, userid)) {
+  if (!has_write_perm(id, userid, userkey)) {
     return extent_protocol::NOACCESS;
   }
 
@@ -174,7 +174,7 @@ int extent_server::groupadd(extent_protocol::groupid_t gid, extent_protocol::use
   ScopedLock l(&mutex);
   //check if admin is actually admin
   if(!isadmin(admin) || !authenticate(admin, adminkey)){
-  	printf("cannot add group\n");
+  	printf("admin problems - cannot add group %u\n", gid);
   }
   else{
   	std::set<extent_protocol::userid_t> temp = groupusers[gid];
@@ -182,12 +182,34 @@ int extent_server::groupadd(extent_protocol::groupid_t gid, extent_protocol::use
   return extent_protocol::OK;
 }
 
+//deletes groupid from groupusers map
+//Note: this will overwrite preexisting groups with the same gid
+int extent_server::groupdel(extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
+{
+  ScopedLock l(&mutex);
+  //check if admin is actually admin
+  if(!isadmin(admin) || !authenticate(admin, adminkey)){
+  	printf("admin problems - cannot add group %u\n", gid);
+  }
+  else{
+  	//group does not exist
+    if(groupusers.find(gid) == groupusers.end()){
+    	printf("cannot delete group %u because it doesn't exist\n", gid);
+    	return extent_protocol::NOENT;
+    }
+    //group exists -> erase from map
+    groupusers.erase(gid);
+  }
+  return extent_protocol::OK;
+}
+
+
 //adds userid to groupid
 int extent_server::useradd(extent_protocol::userid_t userid, extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
   ScopedLock l(&mutex);
   if(!isadmin(admin) || !authenticate(admin, adminkey)){
-  	printf("cannot add user\n");
+  	printf("admin problems - cannot add user %u\n", userid);
   }
   else{
   	(groupusers[gid]).insert(userid);
@@ -195,11 +217,45 @@ int extent_server::useradd(extent_protocol::userid_t userid, extent_protocol::gr
   return extent_protocol::OK;
 }
 
+//deletes userid from groupid
+int extent_server::userdel(extent_protocol::userid_t userid, extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
+{
+  ScopedLock l(&mutex);
+  if(!isadmin(admin) || !authenticate(admin, adminkey)){
+  	printf("admin problems - cannot add user %u\n", userid);
+  }
+  else{
+  	//group does not exist
+  	if(groupusers.find(gid) == groupusers.end()){
+  		printf("cannot delete user %u from group %u because group doesn't exist\n", userid, gid);
+    	return extent_protocol::NOENT;
+    }
+	else{
+		std::set<extent_protocol::userid_t> users = groupusers[gid];
+		//user does not exist
+		if(users.find(userid) == users.end()){
+  			printf("cannot delete user %u from group %u because user doesn't exist\n", userid, gid);
+    		return extent_protocol::NOENT;
+		}
+		//user does exist -> remove user
+		else{
+			users.erase(userid);
+			groupusers[gid] = users;
+		}
+	}
+  }
+  return extent_protocol::OK;
+}
+
 //NOTE: the following permissions predicates all called with lock held
 //check if user has permission to read extent
 bool extent_server::has_read_perm(extent_protocol::extentid_t id, 
-    extent_protocol::userid_t userid)
+    extent_protocol::userid_t userid, std::string userkey)
 {
+  if(!authenticate(userid, userkey)){
+  	printf("no read permission - wrong password\n");
+  	return false;
+  }
   // if we have no record of it yet, just return true
   if (attrs.count(id) == 0) {
     return true;
@@ -211,8 +267,12 @@ bool extent_server::has_read_perm(extent_protocol::extentid_t id,
 
 //check if user has permission to write extent
 bool extent_server::has_write_perm(extent_protocol::extentid_t id,
-    extent_protocol::userid_t userid)
+    extent_protocol::userid_t userid, std::string userkey)
 {
+  if(!authenticate(userid, userkey)){
+  	printf("no read permission - wrong password\n");
+  	return false;
+  }
   // if we have no record of it yet, just return true
   if (attrs.count(id) == 0) {
     return true;
@@ -224,8 +284,12 @@ bool extent_server::has_write_perm(extent_protocol::extentid_t id,
 
 //check if user has permission to execute extent
 bool extent_server::has_execute_perm(extent_protocol::extentid_t id,
-    extent_protocol::userid_t userid)
+    extent_protocol::userid_t userid, std::string userkey)
 {
+  if(!authenticate(userid, userkey)){
+  	printf("no read permission - wrong password\n");
+  	return false;
+  }
   // if we have no record of it yet, just return true
   if (attrs.count(id) == 0) {
     return true;
@@ -246,25 +310,30 @@ bool extent_server::ingroup(extent_protocol::userid_t userid,
 }
 
 //checks if user is admin user
+//assumes lock is held
 bool extent_server::isadmin(extent_protocol::userid_t userid)
 {
-	//userid NOT admin
-	if(groupusers[1].find(userid) == groupusers[1].end()){
-		printf("user %u is not admin. ", userid);
-		return false;
-	}
 	return true;
+	//userid NOT admin
+// 	if(groupusers[1].find(userid) == groupusers[1].end()){
+// 		printf("user %u is not admin. ", userid);
+// 		return false;
+// 	}
+// 	return true;
 }
 
 //check if correct userkey (password) is provided for userid
+//assumes lock is held
 bool extent_server::authenticate(extent_protocol::userid_t userid, std::string userkey)
 {
-	if(userkeys[userid] == userkey){
-		return true;
-	}
-	else{
-		return false;
-	}
+	return true;
+// 	if(userkeys[userid] == userkey){
+// 		return true;
+// 	}
+// 	else{
+// 		printf("wrong key provided for user %u\n", userid);
+// 		return false;
+// 	}
 }
 
 
