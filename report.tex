@@ -16,7 +16,7 @@ The traditional Unix security model provides identification via user
 and group names and IDs, and authentication via password login.
 Access control is provided per-file, where each file
 has a user, group, and permissions bits (corresponding to read, write,
-and execute priviledges). This model was designed for use on mainframes,
+and execute privileges). This model was designed for use on mainframes,
 where multiple users log in to a single machine, running a single
 filesystem on a single kernel. Therefore the isolation between kernel
 space and user space is sufficient to enforce security, since making
@@ -35,9 +35,9 @@ with forged credentials).
 
 One challenge of implementing a secure filesystem within the FUSE
 architecture is that the interface was originally designed to be
-part of a complete kernel environment, and not used in isolation from
-its security context. For example, the {\tt read}
-and {\tt write} calls do not tell us who is attempting the operation.
+part of a complete kernel environment, where the filesystem code
+is trusted. Since {\tt yfs\_client} runs in user space, this is no
+longer true.
 To solve this problem, we need users to sign in to the filesystem.
 In our implementation this is done at mount time; each user must
 create and use their own mount point accessing the shared filesystem.

@@ -379,7 +379,7 @@ yfs_client::chmod(inum fnum, unsigned long mode) {
 }
 
 int
-yfs_client::chown(inum fnum, extent_protocol::userid_t uid, extent_protocol::groupid_t gid) {
+yfs_client::chuid(inum fnum, unsigned long uid) {
   ServerScopedLock psl(lc, (lock_protocol::lockid_t) fnum);
   
   extent_protocol::attr a;
@@ -389,6 +389,23 @@ yfs_client::chown(inum fnum, extent_protocol::userid_t uid, extent_protocol::gro
   }
 
   a.uid = uid;
+  if (ec->setattr(fnum, a) == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
+
+  return OK;
+}
+
+int
+yfs_client::chgid(inum fnum, unsigned long gid) {
+  ServerScopedLock psl(lc, (lock_protocol::lockid_t) fnum);
+  
+  extent_protocol::attr a;
+  extent_protocol::status r = ec->getattr(fnum, a);
+  if (r == extent_protocol::NOENT) {
+    return NOENT;
+  }
+
   a.gid = gid;
   if (ec->setattr(fnum, a) == extent_protocol::NOACCESS) {
     return NOACCESS;

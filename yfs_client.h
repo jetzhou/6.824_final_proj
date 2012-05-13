@@ -61,7 +61,8 @@ class yfs_client {
   int read(inum, off_t, size_t, std::string &);
   int truncate(inum, size_t);
   int chmod(inum, unsigned long);
-  int chown(inum, extent_protocol::userid_t, extent_protocol::groupid_t);
+  int chuid(inum, unsigned long);
+  int chgid(inum, unsigned long);
 };
 
 #endif 
