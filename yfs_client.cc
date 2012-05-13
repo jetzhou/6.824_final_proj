@@ -270,6 +270,9 @@ yfs_client::read(inum num, off_t off, size_t size, std::string &buf)
   if (r == extent_protocol::NOENT) {
     return NOENT;
   }
+  if (r == extent_protocol::NOACCESS) {
+    return NOACCESS;
+  }
 
   buf.replace(0, size, content, off, size);
   return OK;

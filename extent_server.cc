@@ -42,6 +42,12 @@ int extent_server::get(extent_protocol::extentid_t id,
     extent_protocol::userid_t userid, std::string userkey, std::string &buf)
 {
   ScopedLock l(&mutex);
+
+  if (!has_read_perm(id, userid)) {
+    printf("extent server thinks no access!\n");
+    return extent_protocol::NOACCESS;
+  }
+  
   // get content corresponding to extentid if it exists
   // return NOENT otherwise
   if (contents.count(id) == 0) {
@@ -166,7 +172,8 @@ bool extent_server::has_read_perm(extent_protocol::extentid_t id,
     extent_protocol::userid_t userid)
 {
   extent_protocol::attr a = attrs[id];
-  return (a.mode&0004) || (a.uid==userid && (a.mode&0400)) ||
+  printf("a.mode = %d, a.uid = %d, userid = %d\n", a.mode, a.uid, userid);
+  return (a.mode&0004) || (a.uid == userid && (a.mode&0400)) ||
     (in_group(userid, a.gid) && (a.mode&0040));
 }
 

@@ -12,7 +12,7 @@ class extent_protocol {
   typedef unsigned short userid_t; //userid
   typedef unsigned short groupid_t; //groupid
   
-  enum xxstatus { OK, RPCERR, NOENT, IOERR };
+  enum xxstatus { OK, RPCERR, NOENT, IOERR, NOACCESS };
   enum rpc_numbers {
     put = 0x6001,
     get,

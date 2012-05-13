@@ -252,10 +252,10 @@ fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
   std::string buf;
   ret = yfs->read(inum, off, size, buf);
 
-  if (ret == yfs_client::IOERR) {
+  if (ret == yfs_client::NOACCESS) {
     fuse_reply_err(req, EACCES);
     return;
-  } else if (ret != yfs_client::OK) {
+  } else if (ret == yfs_client::NOENT) {
     fuse_reply_err(req, ENOENT);
     return;
   }
