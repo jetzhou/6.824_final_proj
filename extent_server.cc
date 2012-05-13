@@ -20,7 +20,7 @@ extent_server::extent_server()
   a.ctime = cur;
   a.mtime = cur;
   a.size = 0;
-  a.mode = 0700;
+  a.mode = 0777;
   a.uid = getuid();
   a.gid = getgid();
   attrs[root] = a;
