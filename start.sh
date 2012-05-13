@@ -53,8 +53,13 @@ sleep 1
 
 rm -rf $YFSDIR1
 mkdir $YFSDIR1 || exit 1
-sleep 1
-CLIENT_KEY1=$(date | md5sum | head -c5)
+#sleep 1
+if [ -e ~/.yfs ]; then
+    CLIENT_KEY1=`cat ~/.yfs`
+else
+    CLIENT_KEY1=$(date | md5sum | head -c5)
+    echo $CLIENT_KEY1 > ~/.yfs
+fi
 echo "starting ./yfs_client $YFSDIR1 $EXTENT_PORT $LOCK_PORT with key $CLIENT_KEY1 > yfs_client1.log 2>&1 &"
 ./yfs_client $YFSDIR1 $EXTENT_PORT $LOCK_PORT $CLIENT_KEY1> yfs_client1.log 2>&1 &
 sleep 1

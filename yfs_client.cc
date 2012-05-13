@@ -36,18 +36,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 yfs_client::yfs_client(std::string extent_dst, std::string lock_dst, std::string userkey)
 {
   ec = new extent_client(extent_dst, (extent_protocol::userid_t) getuid(), userkey);
-  lc = new lock_client(lock_dst);
-  
-  // put in root directory
-  inum root = 0x00000001;
-  ServerScopedLock sl(lc, (lock_protocol::lockid_t) root);
-  ec->put(root, "");
-  extent_protocol::attr a;
-  ec->getattr(root, a);
-  a.mode = 0700;
-  a.uid = getuid();
-  a.gid = getgid();
-  ec->setattr(root, a);
+  lc = new lock_client(lock_dst);  
 }
 
 yfs_client::inum

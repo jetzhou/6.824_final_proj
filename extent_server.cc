@@ -11,6 +11,19 @@
 extent_server::extent_server()
 {
   pthread_mutex_init(&mutex, NULL);
+  // put in root directory
+  extent_protocol::extentid_t root = 0x00000001;
+  contents[root] = "";
+  extent_protocol::attr a;
+  time_t cur = time(NULL);
+  a.atime = cur;
+  a.ctime = cur;
+  a.mtime = cur;
+  a.size = 0;
+  a.mode = 0700;
+  a.uid = getuid();
+  a.gid = getgid();
+  attrs[root] = a;
 }
 
 
