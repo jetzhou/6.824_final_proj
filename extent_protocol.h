@@ -23,12 +23,6 @@ class extent_protocol {
     groupadd,
     useradd
   };
-  
-  //stuct that stores group name and id
-  struct group{
-  	std::string name;
-  	groupid_t id;
-  };
 
   struct attr {
     unsigned int atime;
@@ -36,8 +30,8 @@ class extent_protocol {
     unsigned int ctime;
     unsigned int size;
     unsigned int mode;
-    unsigned int uid;
-    unsigned int gid;
+    extent_protocol::userid_t uid;
+    extent_protocol::groupid_t gid;
   };
 };
 
