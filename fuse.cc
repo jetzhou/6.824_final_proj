@@ -197,23 +197,24 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
     } else {
       ret = yfs->truncate(inum, st.st_size - attr->st_size);
     }
-
-  } else if (FUSE_SET_ATTR_MODE & to_set) {
+  }
+  if (FUSE_SET_ATTR_MODE & to_set) {
     printf("   fuseserver_setattr setting mode\n");
     ret = yfs->chmod(inum, attr->st_mode);
-
-  } else if ((FUSE_SET_ATTR_UID & to_set)) {
+  }
+  if ((FUSE_SET_ATTR_UID & to_set)) {
     printf("   fuseserver_setattr set uid\n");
     ret = yfs->chuid(inum, attr->st_uid);
-
-  } else if ((FUSE_SET_ATTR_GID & to_set)) {
+  }
+  if ((FUSE_SET_ATTR_GID & to_set)) {
     printf("   fuseserver_setattr set gid\n");
     ret = yfs->chgid(inum, attr->st_gid);
-
-  } else {
+  }
+  /*
+  else {
     fuse_reply_err(req, ENOSYS);
   }
-  
+  */
   // whether the write was successful
   if (ret == yfs_client::IOERR) {
     fuse_reply_err(req, EACCES);
@@ -222,6 +223,8 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
     fuse_reply_err(req, ENOENT);
     return;
   }
+
+  getattr(inum, st);
 
   fuse_reply_attr(req, &st, 0);
 }
