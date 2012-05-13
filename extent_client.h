@@ -26,6 +26,9 @@ class extent_client {
   extent_protocol::status remove(extent_protocol::extentid_t eid);
   extent_protocol::status setattr(extent_protocol::extentid_t eid,
                                   extent_protocol::attr a);
+  extent_protocol::status groupadd(extent_protocol::groupid_t gid);
+  extent_protocol::status useradd(extent_protocol::userid_t uid, extent_protocol::groupid_t gid);
+  
 };
 
 #endif 

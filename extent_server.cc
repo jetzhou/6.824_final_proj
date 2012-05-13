@@ -23,7 +23,7 @@ extent_server::extent_server()
   a.mode = 0700;
   a.uid = getuid();
   a.gid = getgid();
-  attrs[root] = a;
+  attrs[root] = a; 
 }
 
 
@@ -134,42 +134,38 @@ int extent_server::remove(extent_protocol::extentid_t id,
  */
 int extent_server::reg(extent_protocol::userid_t userid, std::string userkey, int &)
 {
-  if (user_keys.count(userid) == 0) {
-    user_keys[userid] = userkey;
+  if (userkeys.count(userid) == 0) {
+    userkeys[userid] = userkey;
   }
   return extent_protocol::OK;
 }
 
 
-//makes a group id for the group name
-int extent_server::add_group(std::string name)
+//inserts groupid into groupusers map, creates an empty list of users
+//Note: this will overwrite preexisting groups with the same gid
+int extent_server::groupadd(extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
   ScopedLock l(&mutex);
-  //can't create group if it already exists
-  if(group_exists(name)){
-    return extent_protocol::IOERR;
+  //check if admin is actually admin
+  if(!isadmin(admin) || !authenticate(admin, adminkey)){
+  	printf("cannot add group\n");
   }
-  else{ //generate a groupid for name
-    group_num++;
-
-    //add new group to groupids map
-    groupids[name] = group_num;
+  else{
+  	std::set<extent_protocol::userid_t> temp = groupusers[gid];
   }
   return extent_protocol::OK;
 }
 
-
-
-int extent_server::add_user_to_group(extent_protocol::userid_t userid, std::string)
+//adds userid to groupid
+int extent_server::useradd(extent_protocol::userid_t userid, extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
   ScopedLock l(&mutex);
-  return extent_protocol::OK;
-}
-
-int extent_server::add_user(extent_protocol::userid_t userid)
-{
-  ScopedLock l(&mutex);
-  //TODO: check i
+  if(!isadmin(admin) || !authenticate(admin, adminkey)){
+  	printf("cannot add user\n");
+  }
+  else{
+  	(groupusers[gid]).insert(userid);
+  }
   return extent_protocol::OK;
 }
 
@@ -180,7 +176,7 @@ bool extent_server::has_read_perm(extent_protocol::extentid_t id,
 {
   extent_protocol::attr a = attrs[id];
   return (a.mode&0004) || (a.uid==userid && (a.mode&0400)) ||
-    (in_group(userid, a.gid) && (a.mode&0040));
+    (ingroup(userid, a.gid) && (a.mode&0040));
 }
 
 //check if user has permission to write extent
@@ -189,7 +185,7 @@ bool extent_server::has_write_perm(extent_protocol::extentid_t id,
 {
   extent_protocol::attr a = attrs[id];
   return (a.mode&0002) || (a.uid==userid && (a.mode&0200)) ||
-    (in_group(userid, a.gid) && (a.mode&0020));
+    (ingroup(userid, a.gid) && (a.mode&0020));
 }
 
 //check if user has permission to execute extent
@@ -198,45 +194,39 @@ bool extent_server::has_execute_perm(extent_protocol::extentid_t id,
 {
   extent_protocol::attr a = attrs[id];
   return (a.mode&0001) || (a.uid==userid && (a.mode&0100)) ||
-    (in_group(userid, a.gid) && (a.mode&0010));
+    (ingroup(userid, a.gid) && (a.mode&0010));
 }
 
-//@frango: check if user exists in group
-bool extent_server::in_group(extent_protocol::userid_t userid, 
-    std::string groupname)
-{
-  //group does not exist
-  if(!group_exists(groupname)){
-    return false;
-  }
-
-  //group id exists
-  extent_protocol::groupid_t groupid = groupids[groupname];
-  return in_group(userid, groupid);
-}
-
-bool extent_server::in_group(extent_protocol::userid_t userid,
+bool extent_server::ingroup(extent_protocol::userid_t userid,
     extent_protocol::groupid_t groupid)
 {
-  std::list<extent_protocol::userid_t> users = groupusers[groupid];
-  std::list<extent_protocol::userid_t>::iterator it;
-
-  for(it = users.begin(); it != users.end(); it++){
-    if(*it == userid){
-      return true;
-    }
-  }
-  return false;
-}
-
-bool extent_server::group_exists(std::string name)
-{
-  //group id does not exist for group name
-  if(groupids.find(name) == groupids.end()){
-    printf("extent_server::in_group() group %s does not exist", name.c_str());
-    return false;
+  std::set<extent_protocol::userid_t> users = groupusers[groupid];
+  if(users.find(userid) == users.end()){
+  	return false;
   }
   return true;
-
 }
+
+//checks if user is admin user
+bool extent_server::isadmin(extent_protocol::userid_t userid)
+{
+	//userid NOT admin
+	if(groupusers[1].find(userid) == groupusers[1].end()){
+		printf("user %u is not admin. ", userid);
+		return false;
+	}
+	return true;
+}
+
+//check if correct userkey (password) is provided for userid
+bool extent_server::authenticate(extent_protocol::userid_t userid, std::string userkey)
+{
+	if(userkeys[userid] == userkey){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
 
