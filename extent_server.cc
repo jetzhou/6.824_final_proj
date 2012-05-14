@@ -171,14 +171,13 @@ int extent_server::reg(extent_protocol::userid_t userid, std::string userkey, in
 //Note: this will overwrite preexisting groups with the same gid
 int extent_server::groupadd(extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
-  ScopedLock l(&mutex);
   //check if admin is actually admin
   if(!isadmin(admin) || !authenticate(admin, adminkey)){
     printf("admin problems - cannot add group %u\n", gid);
+    return extent_protocol::NOACCESS;
   }
-  else{
-    std::set<extent_protocol::userid_t> temp = groupusers[gid];
-  }
+  
+  std::set<extent_protocol::userid_t> temp = groupusers[gid];
   return extent_protocol::OK;
 }
 
@@ -186,20 +185,20 @@ int extent_server::groupadd(extent_protocol::groupid_t gid, extent_protocol::use
 //Note: this will overwrite preexisting groups with the same gid
 int extent_server::groupdel(extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
-  ScopedLock l(&mutex);
   //check if admin is actually admin
   if(!isadmin(admin) || !authenticate(admin, adminkey)){
     printf("admin problems - cannot add group %u\n", gid);
+    return extent_protocol::NOACCESS;
   }
-  else{
-    //group does not exist
-    if(groupusers.find(gid) == groupusers.end()){
-      printf("cannot delete group %u because it doesn't exist\n", gid);
-      return extent_protocol::NOENT;
-    }
-    //group exists -> erase from map
-    groupusers.erase(gid);
+
+  //group does not exist
+  if(groupusers.find(gid) == groupusers.end()){
+    printf("cannot delete group %u because it doesn't exist\n", gid);
+    return extent_protocol::NOENT;
   }
+
+  //group exists -> erase from map
+  groupusers.erase(gid);
   return extent_protocol::OK;
 }
 
@@ -207,43 +206,39 @@ int extent_server::groupdel(extent_protocol::groupid_t gid, extent_protocol::use
 //adds userid to groupid
 int extent_server::useradd(extent_protocol::userid_t userid, extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
-  ScopedLock l(&mutex);
-  if(!isadmin(admin) || !authenticate(admin, adminkey)){
+  if (!isadmin(admin) || !authenticate(admin, adminkey)) {
     printf("admin problems - cannot add user %u\n", userid);
-  }
-  else{
-    (groupusers[gid]).insert(userid);
-  }
+    return extent_protocol::NOACCESS;
+  } 
+  
+  groupusers[gid].insert(userid);
   return extent_protocol::OK;
 }
 
 //deletes userid from groupid
 int extent_server::userdel(extent_protocol::userid_t userid, extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
-  ScopedLock l(&mutex);
-  if(!isadmin(admin) || !authenticate(admin, adminkey)){
+  if (!isadmin(admin) || !authenticate(admin, adminkey)) {
     printf("admin problems - cannot add user %u\n", userid);
+    return extent_protocol::OK;
   }
-  else{
-    //group does not exist
-    if(groupusers.find(gid) == groupusers.end()){
-      printf("cannot delete user %u from group %u because group doesn't exist\n", userid, gid);
-      return extent_protocol::NOENT;
-    }
-    else{
-      std::set<extent_protocol::userid_t> users = groupusers[gid];
-      //user does not exist
-      if(users.find(userid) == users.end()){
-        printf("cannot delete user %u from group %u because user doesn't exist\n", userid, gid);
-        return extent_protocol::NOENT;
-      }
-      //user does exist -> remove user
-      else{
-        users.erase(userid);
-        groupusers[gid] = users;
-      }
-    }
+
+  //group does not exist
+  if (groupusers.find(gid) == groupusers.end()) {
+    printf("cannot delete user %u from group %u because group doesn't exist\n", userid, gid);
+    return extent_protocol::NOENT;
   }
+
+  std::set<extent_protocol::userid_t> users = groupusers[gid];
+  //user does not exist
+  if(users.find(userid) == users.end()){
+    printf("cannot delete user %u from group %u because user doesn't exist\n", userid, gid);
+    return extent_protocol::NOENT;
+  }
+
+  //user does exist -> remove user
+  users.erase(userid);
+  groupusers[gid] = users;
   return extent_protocol::OK;
 }
 
