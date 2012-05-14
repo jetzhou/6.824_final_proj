@@ -66,27 +66,24 @@ main(int argc, char *argv[]) {
 
   std::string op(argv[2]);
 
-  char* uname = argv[3];
-  char* gname = argv[4];
+  char* uname     = argv[3];
+  char* gname     = argv[4];
   char* adminname = argv[5];
   std::string adminkey(argv[6]);
 
-  uid_t uid = getpwnam(uname)->pw_uid;
-  uid_t adminid = getpwnam(adminname)->pw_uid;
-  gid_t gid = getgrnam(gname)->gr_gid;
+  uid_t uid     = (extent_protocol::userid_t) getpwnam(uname)->pw_uid;
+  uid_t adminid = (extent_protocol::userid_t) getpwnam(adminname)->pw_uid;
+  gid_t gid     = (extent_protocol::groupid_t) getgrnam(gname)->gr_gid;
 
+  extent_protocol::status ret;
   if (op == "groupadd") {
-    util->groupadd((extent_protocol::groupid_t) gid, 
-            (extent_protocol::groupid_t) adminid, adminkey);
+    ret = util->groupadd(gid, adminid, adminkey);
   } else if (op == "groupdel") {
-    util->groupdel((extent_protocol::groupid_t) gid, 
-            (extent_protocol::groupid_t) adminid, adminkey);
+    ret = util->groupdel(gid, adminid, adminkey);
   } else if (op == "useradd") {
-    util->useradd((extent_protocol::userid_t) uid, (extent_protocol::groupid_t) gid, 
-            (extent_protocol::groupid_t) adminid, adminkey);
+    ret = util->useradd(uid, gid, adminid, adminkey);
   } else if (op == "userdel") {
-    util->userdel((extent_protocol::userid_t) uid, (extent_protocol::groupid_t) gid, 
-            (extent_protocol::groupid_t) adminid, adminkey);
+    ret = util->userdel(uid, gid, adminid, adminkey);
   } else {
     fprintf(stderr, "Usage: grouputil <port-extent-server> <operation> <username> <groupname> <yourid> <youruserkey>\n");
     fprintf(stderr, "Possible operations are: groupadd, groupdel, useradd, userdel\n");
@@ -94,6 +91,12 @@ main(int argc, char *argv[]) {
     exit(1);
   }
 
-  exit(0);
+  if (ret == extent_protocol::OK) {
+    fprintf(stdout, "%s was successful!\n", op.c_str());
+    exit(0);
+  } else {
+    fprintf(stderr, "%s was unsuccessful!\n", op.c_str());
+    exit(1);
+  }
 
 }
