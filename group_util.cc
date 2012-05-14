@@ -1,6 +1,6 @@
 #include "group_util.h"
 #include <string>
-#include <sys/type.h>
+#include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
 

@@ -270,7 +270,7 @@ bool extent_server::has_write_perm(extent_protocol::extentid_t id,
     extent_protocol::userid_t userid, std::string userkey)
 {
   if(!authenticate(userid, userkey)){
-  	printf("no read permission - wrong password\n");
+  	printf("no write permission - wrong password\n");
   	return false;
   }
   // if we have no record of it yet, just return true

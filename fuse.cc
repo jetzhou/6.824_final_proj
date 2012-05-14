@@ -216,10 +216,10 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
   }
   */
   // whether the write was successful
-  if (ret == yfs_client::IOERR) {
+  if (ret == yfs_client::NOACCESS) {
     fuse_reply_err(req, EACCES);
     return;
-  } else if (ret != yfs_client::OK) {
+  } else if (ret == yfs_client::IOERR) {
     fuse_reply_err(req, ENOENT);
     return;
   }
@@ -343,10 +343,10 @@ fuseserver_write(fuse_req_t req, fuse_ino_t ino,
   std::string str(buf, size);
   ret = yfs->write(inum, off, str);
   
-  if (ret == yfs_client::IOERR) {
+  if (ret == yfs_client::NOACCESS) {
     fuse_reply_err(req, EACCES);
     return;
-  } else if (ret != yfs_client::OK) {
+  } else if (ret == yfs_client::IOERR) {
     fuse_reply_err(req, ENOENT);
     return;
   }
@@ -598,7 +598,7 @@ fuseserver_unlink(fuse_req_t req, fuse_ino_t parent, const char *name)
     fuse_reply_err(req, 0);
   } else if (ret == yfs_client::NOENT) {
     fuse_reply_err(req, ENOENT);
-  } else if (ret == yfs_client::IOERR) {
+  } else if (ret == yfs_client::NOACCESS) {
     fuse_reply_err(req, EACCES);
   } else {
     fuse_reply_err(req, ENOSYS);
