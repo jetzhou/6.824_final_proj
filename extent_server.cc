@@ -189,7 +189,7 @@ int extent_server::groupdel(extent_protocol::groupid_t gid, extent_protocol::use
   printf("deleting group : %u \n", gid);
   //check if admin is actually admin
   if(!isadmin(admin) || !authenticate(admin, adminkey)){
-    printf("admin problems - cannot add group %u\n", gid);
+    printf("admin problems - cannot delete group %u\n", gid);
     return extent_protocol::NOACCESS;
   }
 
@@ -223,7 +223,7 @@ int extent_server::userdel(extent_protocol::userid_t userid, extent_protocol::gr
 {
   printf("deleting user %u from group %u \n", userid, gid);
   if (!isadmin(admin) || !authenticate(admin, adminkey)) {
-    printf("admin problems - cannot add user %u\n", userid);
+    printf("admin problems - cannot delete user %u\n", userid);
     return extent_protocol::OK;
   }
 
