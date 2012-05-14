@@ -69,25 +69,3 @@ extent_client::remove(extent_protocol::extentid_t eid)
   return ret;
 }
 
-//add group to extent server
-extent_protocol::status 
-extent_client::groupadd(extent_protocol::groupid_t gid)
-{
-  extent_protocol::status ret = extent_protocol::OK;
-  int r;
-  ret = cl->call(extent_protocol::groupadd, gid, userid, userkey, r);
-  return ret;
-}
-
-//add user to group
-extent_protocol::status
-extent_client::useradd(extent_protocol::userid_t uid, extent_protocol::groupid_t gid)
-{
-  extent_protocol::status ret = extent_protocol::OK;
-  int r;
-  ret = cl->call(extent_protocol::useradd, uid, gid, userid, userkey, r);
-  return ret;	
-}
-
-
-

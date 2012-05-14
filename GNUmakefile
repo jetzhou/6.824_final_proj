@@ -35,7 +35,7 @@ CXX = g++
 lab:  lab$(LAB)
 lab1: rpc/rpctest lock_server lock_tester lock_demo
 lab2: rpc/rpctest lock_server lock_tester lock_demo yfs_client extent_server
-lab3: yfs_client extent_server lock_server test-lab-3-b test-lab-3-c
+lab3: yfs_client extent_server lock_server test-lab-3-b test-lab-3-c group_util
 lab4: yfs_client extent_server lock_server lock_tester test-lab-3-b\
 	 test-lab-3-c
 lab5: yfs_client extent_server lock_server test-lab-3-b test-lab-3-c
@@ -85,6 +85,8 @@ ifeq ($(LAB7GE),1)
 endif
 
 lock_server : $(patsubst %.cc,%.o,$(lock_server)) rpc/librpc.a
+
+group_util : group_util.o rpc/librpc.a
 
 yfs_client=yfs_client.cc extent_client.cc fuse.cc
 ifeq ($(LAB3GE),1)

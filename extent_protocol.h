@@ -21,7 +21,9 @@ class extent_protocol {
     setattr,
     reg,
     groupadd,
-    useradd
+    groupdel,
+    useradd,
+    userdel
   };
 
   struct attr {

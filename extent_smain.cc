@@ -33,7 +33,9 @@ main(int argc, char *argv[])
   server.reg(extent_protocol::remove, &ls, &extent_server::remove);
   server.reg(extent_protocol::reg, &ls, &extent_server::reg);
   server.reg(extent_protocol::groupadd, &ls, &extent_server::groupadd);
+  server.reg(extent_protocol::groupdel, &ls, &extent_server::groupdel);
   server.reg(extent_protocol::useradd, &ls, &extent_server::useradd);
+  server.reg(extent_protocol::userdel, &ls, &extent_server::userdel);
   
   
 
