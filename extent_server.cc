@@ -160,8 +160,14 @@ int extent_server::remove(extent_protocol::extentid_t id,
  */
 int extent_server::reg(extent_protocol::userid_t userid, std::string userkey, int &)
 {
+  //first time userid is seen by extent server
   if (userkeys.count(userid) == 0) {
     userkeys[userid] = userkey;
+  }
+  else{
+  	if(!authenticate(userid, userkey)){
+  		return extent_protocol::NOACCESS;
+  	}
   }
   return extent_protocol::OK;
 }
@@ -325,14 +331,14 @@ bool extent_server::isadmin(extent_protocol::userid_t userid)
 //assumes lock is held
 bool extent_server::authenticate(extent_protocol::userid_t userid, std::string userkey)
 {
-  return true;
-  //  if(userkeys[userid] == userkey){
-  //      return true;
-  //  }
-  //  else{
-  //      printf("wrong key provided for user %u\n", userid);
-  //      return false;
-  //  }
+  //return true;
+ if(userkeys[userid] == userkey){
+     return true;
+ }
+ else{
+     printf("wrong key provided for user %u\n", userid);
+     return false;
+ }
 }
 
 

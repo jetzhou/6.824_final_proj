@@ -21,7 +21,12 @@ extent_client::extent_client(std::string dst, extent_protocol::userid_t uid, std
     printf("extent_client: bind failed\n");
   }
   int r;
-  cl->call(extent_protocol::reg, userid, userkey, r);
+  int ret;
+  ret = cl->call(extent_protocol::reg, userid, userkey, r);
+  if(ret == extent_protocol::NOACCESS){
+  	fprintf(stderr, "wrong userkey\n");
+  	exit(1);
+  }
 }
 
 extent_protocol::status
