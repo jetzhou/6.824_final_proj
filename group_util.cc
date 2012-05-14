@@ -52,13 +52,13 @@ group_util::userdel(extent_protocol::userid_t uid, extent_protocol::groupid_t gi
   return ret;
 }
 
+
 int
 main(int argc, char *argv[]) {
 
-  if (argc != 6) {
-    fprintf(stderr, "Usage: grouputil <port-extent-server> <operation> <username> <groupname> <adminname> <adminkey>\n");
-    fprintf(stderr, "Possible operations are: groupadd, groupdel, useradd, userdel\n");
-    fprintf(stderr, "Use NA if no group/user name is available\n");
+  if (argc != 7) {
+    fprintf(stderr, "Usage: group_util <port-extent-server> <operation> <username> <groupname> <adminname> <adminkey>\n");
+    fprintf(stderr, "Possible operations are: groupadd, groupdel, useradd, userdel %d\n", argc);
     exit(1);
   }
 
@@ -85,9 +85,9 @@ main(int argc, char *argv[]) {
   } else if (op == "userdel") {
     ret = util->userdel(uid, gid, adminid, adminkey);
   } else {
-    fprintf(stderr, "Usage: grouputil <port-extent-server> <operation> <username> <groupname> <yourid> <youruserkey>\n");
+    fprintf(stderr, "Usage: group_util <port-extent-server> <operation> <username> <groupname> <yourid> <youruserkey>\n");
+    fprintf(stderr, "Wrong op provided\n");
     fprintf(stderr, "Possible operations are: groupadd, groupdel, useradd, userdel\n");
-    fprintf(stderr, "Use NA if no group/user name is available\n");
     exit(1);
   }
 

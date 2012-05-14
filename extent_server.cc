@@ -171,6 +171,7 @@ int extent_server::reg(extent_protocol::userid_t userid, std::string userkey, in
 //Note: this will overwrite preexisting groups with the same gid
 int extent_server::groupadd(extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
+  printf("adding group : %u \n", gid);
   //check if admin is actually admin
   if(!isadmin(admin) || !authenticate(admin, adminkey)){
     printf("admin problems - cannot add group %u\n", gid);
@@ -185,6 +186,7 @@ int extent_server::groupadd(extent_protocol::groupid_t gid, extent_protocol::use
 //Note: this will overwrite preexisting groups with the same gid
 int extent_server::groupdel(extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
+  printf("deleting group : %u \n", gid);
   //check if admin is actually admin
   if(!isadmin(admin) || !authenticate(admin, adminkey)){
     printf("admin problems - cannot add group %u\n", gid);
@@ -206,6 +208,7 @@ int extent_server::groupdel(extent_protocol::groupid_t gid, extent_protocol::use
 //adds userid to groupid
 int extent_server::useradd(extent_protocol::userid_t userid, extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
+  printf("adding user %u to group %u \n", userid, gid);
   if (!isadmin(admin) || !authenticate(admin, adminkey)) {
     printf("admin problems - cannot add user %u\n", userid);
     return extent_protocol::NOACCESS;
@@ -218,6 +221,7 @@ int extent_server::useradd(extent_protocol::userid_t userid, extent_protocol::gr
 //deletes userid from groupid
 int extent_server::userdel(extent_protocol::userid_t userid, extent_protocol::groupid_t gid, extent_protocol::userid_t admin, std::string adminkey, int &)
 {
+  printf("deleting user %u from group %u \n", userid, gid);
   if (!isadmin(admin) || !authenticate(admin, adminkey)) {
     printf("admin problems - cannot add user %u\n", userid);
     return extent_protocol::OK;
