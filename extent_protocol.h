@@ -9,8 +9,8 @@ class extent_protocol {
  public:
   typedef int status;
   typedef unsigned long long extentid_t; //extentid
-  typedef unsigned short userid_t; //userid
-  typedef unsigned short groupid_t; //groupid
+  typedef unsigned int userid_t; //userid
+  typedef unsigned int groupid_t; //groupid
   
   enum xxstatus { OK, RPCERR, NOENT, IOERR, NOACCESS };
   enum rpc_numbers {
